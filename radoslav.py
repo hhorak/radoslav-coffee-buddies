@@ -38,6 +38,10 @@ from json import dumps
 from httplib2 import Http
 import csv
 
+# for mails
+import smtplib
+from email.mime.text import MIMEText
+
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 ENV_OK = True
@@ -57,6 +61,34 @@ try:
 except KeyError:
     print("ERROR: The following environment variables are not set: RADOSLAV_FORM_SPREADSHEET_ID, RADOSLAV_CHAT_URL, RADOSLAV_CHAT_THREAD")
     ENV_OK = False
+
+RH_SMTP_SERVER = 'smtp.corp.redhat.com'
+MAIL_SENDER = 'hhorak+coffee@redhat.com'
+
+RH_SMTP_SERVER_PORT=25
+
+MAIL_TEXT="""\
+Hey folks!
+
+You're so lucky today. Based on the registration via the Google Form
+(https://forms.gle/VsRghmG8tnRNE8dW6), the random algorithm matched you two:
+(check mail recepients).
+
+Now, it's up to you two to arrange a virtual coffee break ⏰ at the time that
+fits your schedule :)
+
+And ideally, you take a screenshot 📷 from the meet-up and upload it to the
+shared drive directory:
+
+  https://drive.google.com/drive/folders/1xJ9AfLjhGf0NIxo-DIxmua50PSQQsWs_?usp=sharing
+
+Have fun!
+
+Radoslav
+aka Coffee Buddies Bot
+"""
+
+MAIL_SUBJECT="Coffee Buddies ☕ Ready to meet somebody new?"
 
 ROW_TIMESTAMP=0
 ROW_EMAIL=1
@@ -293,6 +325,28 @@ def send_messages(nice_output, skip_messages):
             pprint(chat_message_response)
 
 
+def send_mail(recepients, safe_messages=False):
+    msg = MIMEText(MAIL_TEXT, 'plain')
+    msg['Subject']= MAIL_SUBJECT
+    msg['From'] = MAIL_SENDER
+    msg['To'] = ','.join(recepients)
+    msg['Bcc'] = 'horak.honza@gmail.com'
+
+    if VERBOSE:
+        print('Sending message to: {} and {}'.format(recepients[0], recepients[1]))
+
+    if safe_messages:
+        print('Rewriting recipients to horak.honza@gmail.com.')
+        recepients = ['horak.honza@gmail.com']
+
+    conn = smtplib.SMTP(RH_SMTP_SERVER, RH_SMTP_SERVER_PORT)
+    conn.set_debuglevel(False)
+    try:
+        conn.sendmail(MAIL_SENDER, recepients, msg.as_string())
+    finally:
+        conn.quit()
+
+
 # A tool that matches random people registred via a Google form
 def main():
     """
@@ -400,7 +454,8 @@ def main():
     # Try to do the random pairing
     (pairs, nice_output, pairs_found) = find_paris(names_to_match, historic_matches, chat_users, args.safe_messages)
     if pairs_found:
-        for pair in pairs:
+        for p in pairs:
+            pair = p.copy()
             matches_values.append([pair.pop(), pair.pop()])
     else:
         print("ERROR: No pairs found. Try the random match again.")
@@ -423,6 +478,11 @@ def main():
         write_back(sheet_values, matches_values, form_data)
 
     send_messages(nice_output, args.skip_messages)
+
+    if pairs_found and not args.skip_messages:
+        for p in pairs:
+            pair = p.copy()
+            send_mail([pair.pop(), pair.pop()], args.safe_messages)
 
 if __name__ == '__main__':
     main()
