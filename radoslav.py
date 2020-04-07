@@ -305,6 +305,20 @@ def main():
       RADOSLAV_FORM_SPREADSHEET_ID: e.g. 1yZB7dSdhdVunvWzTMHv0kPIVnOmAzoyMfQw_Ct9MLn4 -- taken from the Google sheet URL
       RADOSLAV_CHAT_URL: e.g. 'https://chat.googleapis.com/v1/spaces/AAAAbsdfkj/messages?key=...=...' -- a string taken from the chat (room -> Configure webhooks)
       RADOSLAV_CHAT_THREAD: e.g. spaces/AAAAbsdfkj/threads/skdjflsdjflk -- can be figureout using html DOM explorer from the Google Hangout Chat code'
+
+    Additionally, in order to tag people correctly in Google Hangout Chat,
+    this script also requires a map file for users and their IDs. This map file
+    is a CSV file (tab-separated) with this structure:
+      name1@server.com    users/1001231324983274598732    Name1 Surname1
+      name2@server.com    users/1009837498326598732597    Name2 Surname2
+
+    This file can be created by hand from names listed in the HTML Dom
+    (show source of the Google Chat web app, particularly the window that
+    lists people in the chat). Then, these values are what we need:
+      data-hovercard-id: ID in the form of user/human/1001231324983274598732
+      data-member-id: email
+      data-name: real name
+    For example how the HTML Dom data can be proceed, see parse-user-ids script.
     """
     parser = argparse.ArgumentParser(description='A tool that matches random people registred via a Google form')
     parser.add_argument("--verbose", help="print more verbose output", action="store_true")
