@@ -343,6 +343,7 @@ def send_mail(recepients, safe_messages=False):
     conn.set_debuglevel(False)
     try:
         conn.sendmail(MAIL_SENDER, recepients, msg.as_string())
+        print('Mail sent to {} and {}'.format(recepients[0], recepients[1]))
     finally:
         conn.quit()
 
