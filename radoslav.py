@@ -337,7 +337,7 @@ def send_mail(recepients, safe_messages=False):
 
     if safe_messages:
         print('Rewriting recipients to horak.honza@gmail.com.')
-        recepients = ['horak.honza@gmail.com']
+        recepients = ['horak.honza@gmail.com', 'horak.honza@gmail.com']
 
     conn = smtplib.SMTP(RH_SMTP_SERVER, RH_SMTP_SERVER_PORT)
     conn.set_debuglevel(False)
@@ -382,6 +382,7 @@ def main():
     parser.add_argument("--skip-write-back", help="do not write the data back to the sheet", action="store_true")
     parser.add_argument("--skip-messages", help="do not send any messages to the chat", action="store_true")
     parser.add_argument("--safe-messages", help="replace name in the messages with hhorak", action="store_true")
+    parser.add_argument("--skip-mails", help="do not send any mail notifications", action="store_true")
     parser.add_argument("--pairs-limit", help="limit number of pairs", type=int)
 
     if not ENV_OK:
@@ -396,6 +397,7 @@ def main():
         args.skip_write_back = True
         args.skip_messages = True
         args.safe_messages = True
+        args.skip_mails = True
 
     if args.debug:
         args.verbose = True
@@ -480,7 +482,9 @@ def main():
 
     send_messages(nice_output, args.skip_messages)
 
-    if pairs_found and not args.skip_messages:
+    if not pairs_found or args.skip_mails:
+        print('Mail sending skipped.')
+    else:
         for p in pairs:
             pair = p.copy()
             send_mail([pair.pop(), pair.pop()], args.safe_messages)

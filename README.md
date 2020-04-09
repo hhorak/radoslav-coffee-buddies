@@ -23,6 +23,7 @@ optional arguments:
                         messages
   --skip-write-back     do not write the data back to the sheet
   --skip-messages       do not send any messages to the chat
+  --skip-mails          do not send any mail notifications
   --safe-messages       replace name in the messages with hhorak
   --pairs-limit PAIRS_LIMIT
                         limit number of pairs
