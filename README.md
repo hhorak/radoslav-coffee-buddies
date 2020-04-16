@@ -10,7 +10,7 @@ It sends a message about randomly created pairs to the Google Hangout Chat.
 
 ```
 usage: radoslav.py [-h] [--verbose] [--debug] [--test-run] [--skip-write-back]
-                   [--skip-messages] [--safe-messages]
+                   [--skip-messages] [--safe-messages] [--skip-mails]
                    [--pairs-limit PAIRS_LIMIT]
 
 A tool that matches random people registred via a Google form
@@ -19,12 +19,12 @@ optional arguments:
   -h, --help            show this help message and exit
   --verbose             print more verbose output
   --debug               print more debug output
-  --test-run            sets on --skip-write-back, --safe-messages, --safe-
-                        messages
+  --test-run            sets on --skip-write-back, --safe-messages, --skip-
+                        messages, --skip-mails
   --skip-write-back     do not write the data back to the sheet
   --skip-messages       do not send any messages to the chat
-  --skip-mails          do not send any mail notifications
   --safe-messages       replace name in the messages with hhorak
+  --skip-mails          do not send any mail notifications
   --pairs-limit PAIRS_LIMIT
                         limit number of pairs
 
