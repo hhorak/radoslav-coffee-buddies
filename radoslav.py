@@ -378,7 +378,7 @@ def main():
     parser = argparse.ArgumentParser(description='A tool that matches random people registred via a Google form')
     parser.add_argument("--verbose", help="print more verbose output", action="store_true")
     parser.add_argument("--debug", help="print more debug output", action="store_true")
-    parser.add_argument("--test-run", help="sets on --skip-write-back, --safe-messages, --safe-messages", action="store_true")
+    parser.add_argument("--test-run", help="sets on --skip-write-back, --safe-messages, --skip-messages, --skip-mails", action="store_true")
     parser.add_argument("--skip-write-back", help="do not write the data back to the sheet", action="store_true")
     parser.add_argument("--skip-messages", help="do not send any messages to the chat", action="store_true")
     parser.add_argument("--safe-messages", help="replace name in the messages with hhorak", action="store_true")
