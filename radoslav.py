@@ -52,20 +52,39 @@ try:
     SAMPLE_RANGE_NAME = 'Form Responses 1!A2:F'
     MATCHES_RANGE_NAME = 'Matches!A2:B'
 
-    # Taken from the chat (room -> Configure webhooks)
-    CHAT_URL = os.environ['RADOSLAV_CHAT_URL']
-
-    # From webapi as topic id
-    CHAT_THREAD = os.environ['RADOSLAV_CHAT_THREAD']
-
 except KeyError:
-    print("ERROR: The following environment variables are not set: RADOSLAV_FORM_SPREADSHEET_ID, RADOSLAV_CHAT_URL, RADOSLAV_CHAT_THREAD")
+    print("ERROR: The following environment variables are not set: RADOSLAV_FORM_SPREADSHEET_ID")
     ENV_OK = False
 
-RH_SMTP_SERVER = 'smtp.corp.redhat.com'
-MAIL_SENDER = 'hhorak+coffee@redhat.com'
+try:
+    # Taken from the chat (room -> Configure webhooks)
+    CHAT_URL = os.environ['RADOSLAV_CHAT_URL']
+    # From webapi as topic id
+    CHAT_THREAD = os.environ['RADOSLAV_CHAT_THREAD']
+except KeyError:
+    print("RADOSLAV_CHAT_URL or RADOSLAV_CHAT_THREAD not set, notifications to the Google Chat are disabled")
+    CHAT_URL = None
+    CHAT_THREAD = None
 
-RH_SMTP_SERVER_PORT=25
+try:
+    SMTP_SERVER = os.environ['RADOSLAV_SMTP_SERVER']
+    MAIL_SENDER = os.environ['RADOSLAV_MAIL_SENDER']
+    SMTP_SERVER_PORT = os.environ['RADOSLAV_SMTP_SERVER_PORT']
+except KeyError:
+    print("RADOSLAV_SMTP_SERVER, RADOSLAV_MAIL_SENDER or RADOSLAV_SMTP_SERVER_PORT not set, notifications by email are disabled")
+    SMTP_SERVER = None
+    MAIL_SENDER = None
+    SMTP_SERVER_PORT = None
+
+try:
+    MAIL_SENDER_TEST = os.environ['RADOSLAV_MAIL_SENDER_TEST']
+except KeyError:
+    MAIL_SENDER_TEST = None
+
+try:
+    CHAT_USER_TEST = os.environ['RADOSLAV_CHAT_USER_TEST']
+except KeyError:
+    CHAT_USER_TEST = None
 
 MAIL_TEXT="""\
 Hey folks!
@@ -133,9 +152,9 @@ def find_paris(names_to_match, historic_matches, chat_users, safe_messages=False
 
         # this is to not bother real people
         if safe_messages:
-            print('Using hhorak instead {} and {}:'.format(buddy_a_repr, buddy_b_repr))
-            buddy_a_repr = '<users/106875931551226392026> (originally {})'.format(buddy_a)
-            buddy_b_repr = '<users/106875931551226392026> (originally {})'.format(buddy_b)
+            print('Using safe user {} instead {} and {}:'.format(CHAT_USER_TEST, buddy_a_repr, buddy_b_repr))
+            buddy_a_repr = '<users/{}> (originally {})'.format(CHAT_USER_TEST, buddy_a)
+            buddy_b_repr = '<users/{}> (originally {})'.format(CHAT_USER_TEST, buddy_b)
 
         nice_output.append('Coffee Buddies match found: {} and {}, please, contact each other and agree on time and format of the coffee chat. Have fun!'.format(buddy_a_repr, buddy_b_repr))
         pairs_found = True
@@ -330,16 +349,15 @@ def send_mail(recepients, safe_messages=False):
     msg['Subject']= MAIL_SUBJECT
     msg['From'] = MAIL_SENDER
     msg['To'] = ','.join(recepients)
-    msg['Bcc'] = 'horak.honza@gmail.com'
 
     if VERBOSE:
         print('Sending message to: {} and {}'.format(recepients[0], recepients[1]))
 
     if safe_messages:
-        print('Rewriting recipients to horak.honza@gmail.com.')
-        recepients = ['horak.honza@gmail.com', 'horak.honza@gmail.com']
+        print('Rewriting recipients to {}.'.format(MAIL_SENDER_TEST))
+        recepients = [MAIL_SENDER_TEST, MAIL_SENDER_TEST]
 
-    conn = smtplib.SMTP(RH_SMTP_SERVER, RH_SMTP_SERVER_PORT)
+    conn = smtplib.SMTP(SMTP_SERVER, SMTP_SERVER_PORT)
     conn.set_debuglevel(False)
     try:
         conn.sendmail(MAIL_SENDER, recepients, msg.as_string())
@@ -357,9 +375,18 @@ def main():
     people to meet.
 
     Make sure the following environment variables are set:
-      RADOSLAV_FORM_SPREADSHEET_ID: e.g. 1yZB7dSdhdVunvWzTMHv0kPIVnOmAzoyMfQw_Ct9MLn4 -- taken from the Google sheet URL
-      RADOSLAV_CHAT_URL: e.g. 'https://chat.googleapis.com/v1/spaces/AAAAbsdfkj/messages?key=...=...' -- a string taken from the chat (room -> Configure webhooks)
-      RADOSLAV_CHAT_THREAD: e.g. spaces/AAAAbsdfkj/threads/skdjflsdjflk -- can be figureout using html DOM explorer from the Google Hangout Chat code'
+    Compulsory:
+      `RADOSLAV_FORM_SPREADSHEET_ID`: e.g. `1yZB7dSdhdVunvWzTMHv0kPIVnOmAzoyMfQw_Ct9MLn4` -- taken from the Google sheet URL
+    Optionally, if the notification should go to the Google Chat:
+      `RADOSLAV_CHAT_URL`: e.g. `https://chat.googleapis.com/v1/spaces/AAAAbsdfkj/messages?key=...=...` -- a string taken from the chat (room -> Configure webhooks)
+      `RADOSLAV_CHAT_THREAD`: e.g. `spaces/AAAAbsdfkj/threads/skdjflsdjflk` -- can be figureout using html DOM explorer from the Google Hangout Chat code'
+    Optionally, if the notification should be sent by mail:
+      `RADOSLAV_SMTP_SERVER`: e.g. `smtp.corp.redhat.com`
+      `RADOSLAV_MAIL_SENDER`: e.g. `hhorak+coffee@redhat.com`
+      `RADOSLAV_SMTP_SERVER_PORT`: e.g. `25`
+    Optionally, if you want to test the functionality, you can re-define recepient of the mail and Google Chat message by these variables:
+      `RADOSLAV_CHAT_USER_TEST`: e.g. `106875931551282394923`
+      `MAIL_SENDER_TEST`: e.g. `hhorak+coffee@redhat.com`
 
     Additionally, in order to tag people correctly in Google Hangout Chat,
     this script also requires a map file for users and their IDs. This map file
@@ -381,7 +408,7 @@ def main():
     parser.add_argument("--test-run", help="sets on --skip-write-back, --safe-messages, --skip-messages, --skip-mails", action="store_true")
     parser.add_argument("--skip-write-back", help="do not write the data back to the sheet", action="store_true")
     parser.add_argument("--skip-messages", help="do not send any messages to the chat", action="store_true")
-    parser.add_argument("--safe-messages", help="replace name in the messages with hhorak", action="store_true")
+    parser.add_argument("--safe-messages", help="replace name in the chat messages with the name from CHAT_USER_TESTenvironment variable and send mails to the address from MAIL_SENDER_TEST environment variable", action="store_true")
     parser.add_argument("--skip-mails", help="do not send any mail notifications", action="store_true")
     parser.add_argument("--pairs-limit", help="limit number of pairs", type=int)
 
@@ -399,6 +426,20 @@ def main():
         args.safe_messages = True
         args.skip_mails = True
 
+    if not CHAT_URL or not CHAT_THREAD:
+        args.skip_messages = True
+
+    if not SMTP_SERVER or not MAIL_SENDER or not SMTP_SERVER_PORT:
+        args.skip_mails = True
+
+    if args.safe_messages:
+        if not CHAT_USER_TEST:
+            print("ERROR: option safe_messages set to ON but RADOSLAV_CHAT_USER_TEST environment variable not set.")
+            return
+        if not MAIL_SENDER_TEST:
+            print("ERROR: option safe_messages set to ON but RADOSLAV_MAIL_SENDER_TEST environment variable not set.")
+            return
+
     if args.debug:
         args.verbose = True
         pprint(args)
@@ -406,7 +447,10 @@ def main():
     VERBOSE = args.verbose
     DEBUG = args.debug
 
-    chat_users = get_chat_users()
+    if not args.skip_messages:
+        chat_users = get_chat_users()
+    else:
+        chat_users = []
 
     random.seed(a=None, version=2)
 
@@ -447,7 +491,7 @@ def main():
 
     # fail if we have no new names
     if len(names_to_match) == 0:
-        print("Error: no names left. Wait for more registrations.")
+        print("ERROR: no names left. Wait for more registrations.")
         return
 
     if VERBOSE:
