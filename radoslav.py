@@ -133,13 +133,13 @@ def find_paris(names_to_match, historic_matches, chat_users, safe_messages=False
             print("ERROR: Buddy {} paired with {} which would be boring. Try the random match again.".format(buddy_a, buddy_b))
             break
         if {buddy_a, buddy_b} in historic_matches:
-            print("ERROR: Buddies {} and {} already met. Try the random match again.".format(buddy_a, buddy_b))
+            print("WARNING: Buddies {} and {} already met. We ignore this pair.".format(buddy_a, buddy_b))
             if VERBOSE:
                 print("Names to match:")
                 pprint(names_to_match)
                 print("History matches:")
                 pprint(historic_matches)
-            break
+            continue
         pairs.append({buddy_a, buddy_b})
         if buddy_a in chat_users:
             buddy_a_repr = '<{}>'.format(chat_users[buddy_a]['id'])
